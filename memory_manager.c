@@ -56,5 +56,25 @@ void dump_memory();
 
 // 释放所有链表内存，程序退出时调用
 void free_all_list();
+// ===================== 函数实现 =====================// ===================== Day2 函数实现 =====================
+void init_memory(long long M) {
+	total_mem = M;
+	free_head = (FreeBlock*)malloc(sizeof(FreeBlock));
+	free_head->start = 0;
+	free_head->size = M;
+	free_head->next = NULL;
+	alloc_head = NULL;
+}
+
+AllocBlock* find_alloc_block(const char *id) {
+	AllocBlock *p = alloc_head;
+	while (p != NULL) {
+		if (strcmp(p->id, id) == 0) {
+			return p;
+		}
+		p = p->next;
+	}
+	return NULL;
+}
 
 
