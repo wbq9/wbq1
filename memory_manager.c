@@ -77,4 +77,66 @@ AllocBlock* find_alloc_block(const char *id) {
 	return NULL;
 }
 
+FreeBlock* best_fit(long long size) {
+	FreeBlock *p = free_head;
+	FreeBlock *target = NULL;
+	while (p != NULL) {
+		if (p->size >= size) {
+			if (target == NULL) {
+				target = p;
+			} else {
+				// 更小的块 或者 同尺寸地址更小
+				if (p->size < target->size || (p->size == target->size && p->start < target->start)) {
+					target = p;
+				}
+			}
+		}
+		p = p->next;
+	}
+	return target;
+}
+
+void alloc_memory(const char *id, long long size) {
+	// 1. ID重复校验
+	if (find_alloc_block(id) != NULL) {
+		printf("ALLOC_FAILED %s DUPLICATE\n", id);
+		return;
+	}
+	// 2. 最佳适应找空闲块
+	FreeBlock *fit = best_fit(size);
+	if (fit == NULL) {
+		printf("ALLOC_FAILED %s NO_SPACE\n", id);
+		return;
+	}
+	long long alloc_start = fit->start;
+	// 3. 创建已分配块节点，头插法插入分配链表
+	AllocBlock *new_alloc = (AllocBlock*)malloc(sizeof(AllocBlock));
+	strcpy(new_alloc->id, id);
+	new_alloc->start = alloc_start;
+	new_alloc->size = size;
+	new_alloc->next = alloc_head;
+	alloc_head = new_alloc;
+	
+	// 4. 更新空闲块：分配剩余部分
+	if (fit->size == size) {
+		// 整块分配，删除空闲节点
+		FreeBlock *pre = NULL, *cur = free_head;
+		while (cur != fit) {
+			pre = cur;
+			cur = cur->next;
+		}
+		if (pre == NULL) {
+			free_head = cur->next;
+		} else {
+			pre->next = cur->next;
+		}
+		free(cur);
+	} else {
+		// 剩余空闲空间，修改起始地址和大小
+		fit->start += size;
+		fit->size -= size;
+	}
+	printf("ALLOCATED %s %lld\n", id, alloc_start);
+}
+
 
