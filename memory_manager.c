@@ -139,4 +139,69 @@ void alloc_memory(const char *id, long long size) {
 	printf("ALLOCATED %s %lld\n", id, alloc_start);
 }
 
+void merge_free_blocks() {
+	if (free_head == NULL || free_head->next == NULL) return;
+	// 第一步：按起始地址升序排序空闲链表
+	FreeBlock *p = free_head;
+	FreeBlock sorted_head = {0,0,NULL};
+	while (p != NULL) {
+		FreeBlock *cur = p;
+		p = p->next;
+		FreeBlock *insert = &sorted_head;
+		while (insert->next != NULL && insert->next->start < cur->start) {
+			insert = insert->next;
+		}
+		cur->next = insert->next;
+		insert->next = cur;
+	}
+	free_head = sorted_head.next;
+	
+	// 第二步：遍历合并相邻块
+	p = free_head;
+	while (p != NULL && p->next != NULL) {
+		long long end = p->start + p->size;
+		if (end == p->next->start) {
+			// 相邻，合并
+			FreeBlock *temp = p->next;
+			p->size += temp->size;
+			p->next = temp->next;
+			free(temp);
+		} else {
+			p = p->next;
+		}
+	}
+}
+
+void free_memory(const char *id) {
+	AllocBlock *del = find_alloc_block(id);
+	if (del == NULL) {
+		printf("FREE_FAILED %s NOT_FOUND\n", id);
+		return;
+	}
+	long long s = del->start;
+	long long sz = del->size;
+	
+	// 从分配链表删除节点
+	AllocBlock *pre = NULL, *cur = alloc_head;
+	while (cur != del) {
+		pre = cur;
+		cur = cur->next;
+	}
+	if (pre == NULL) {
+		alloc_head = cur->next;
+	} else {
+		pre->next = cur->next;
+	}
+	free(cur);
+	
+	// 新建空闲块，插入链表，然后合并
+	FreeBlock *new_free = (FreeBlock*)malloc(sizeof(FreeBlock));
+	new_free->start = s;
+	new_free->size = sz;
+	new_free->next = free_head;
+	free_head = new_free;
+	merge_free_blocks();
+	
+	printf("FREED %s %lld %lld\n", id, s, sz);
+}
 
