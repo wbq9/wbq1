@@ -205,3 +205,29 @@ void free_memory(const char *id) {
 	printf("FREED %s %lld %lld\n", id, s, sz);
 }
 
+void query_block(const char *id) {
+	AllocBlock *blk = find_alloc_block(id);
+	if (blk == NULL) {
+		printf("BLOCK_NOT_FOUND %s\n", id);
+	} else {
+		printf("BLOCK %s %lld %lld\n", blk->id, blk->start, blk->size);
+	}
+}
+
+// 辅助：对分配块按start升序排序
+static void sort_alloc_by_start(AllocBlock **head) {
+	if (*head == NULL || (*head)->next == NULL) return;
+	AllocBlock dummy = {"",0,0,NULL};
+	AllocBlock *p = *head;
+	while (p != NULL) {
+		AllocBlock *cur = p;
+		p = p->next;
+		AllocBlock *ins = &dummy;
+		while (ins->next != NULL && ins->next->start < cur->start) {
+			ins = ins->next;
+		}
+		cur->next = ins->next;
+		ins->next = cur;
+	}
+	*head = dummy.next;
+}
