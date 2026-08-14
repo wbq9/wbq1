@@ -289,3 +289,50 @@ void compact_memory() {
 		free(tmp);
 	}
 }
+
+void dump_memory() {
+	// 拷贝并排序分配块
+	AllocBlock tmp_head = {"",0,0,NULL};
+	AllocBlock *p = alloc_head;
+	while (p != NULL) {
+		AllocBlock *new_n = (AllocBlock*)malloc(sizeof(AllocBlock));
+		strcpy(new_n->id, p->id);
+		new_n->start = p->start;
+		new_n->size = p->size;
+		new_n->next = tmp_head.next;
+		tmp_head.next = new_n;
+		p = p->next;
+	}
+	sort_alloc_by_start(&tmp_head.next);
+	
+	// 打印已分配块
+	int alloc_cnt = 0;
+	AllocBlock *ap = tmp_head.next;
+	while (ap != NULL) {
+		alloc_cnt++;
+		ap = ap->next;
+	}
+	printf("ALLOCATED_BLOCKS %d\n", alloc_cnt);
+	ap = tmp_head.next;
+	while (ap != NULL) {
+		printf("%s %lld %lld\n", ap->id, ap->start, ap->size);
+		AllocBlock *tmp = ap;
+		ap = ap->next;
+		free(tmp);
+	}
+	
+	// 排序空闲块并打印
+	merge_free_blocks();
+	int free_cnt = 0;
+	FreeBlock *fp = free_head;
+	while (fp != NULL) {
+		free_cnt++;
+		fp = fp->next;
+	}
+	printf("FREE_BLOCKS %d\n", free_cnt);
+	fp = free_head;
+	while (fp != NULL) {
+		printf("%lld %lld\n", fp->start, fp->size);
+		fp = fp->next;
+	}
+}
