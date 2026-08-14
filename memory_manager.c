@@ -231,3 +231,61 @@ static void sort_alloc_by_start(AllocBlock **head) {
 	}
 	*head = dummy.next;
 }
+
+void compact_memory() {
+	sort_alloc_by_start(&alloc_head);
+	AllocBlock *p = alloc_head;
+	long long cur_addr = 0;
+	int move_cnt = 0;
+	// 临时链表保存移动记录
+	typedef struct MoveLog {
+		char id[MAX_ID_LEN];
+		long long old_s;
+		long long new_s;
+		struct MoveLog *next;
+	} MoveLog;
+	MoveLog log_head = {"",0,0,NULL};
+	MoveLog *log_tail = &log_head;
+	
+	while (p != NULL) {
+		if (p->start != cur_addr) {
+			// 发生移动，记录日志
+			MoveLog *log = (MoveLog*)malloc(sizeof(MoveLog));
+			strcpy(log->id, p->id);
+			log->old_s = p->start;
+			log->new_s = cur_addr;
+			log->next = NULL;
+			log_tail->next = log;
+			log_tail = log;
+			move_cnt++;
+			p->start = cur_addr;
+		}
+		cur_addr += p->size;
+		p = p->next;
+	}
+	
+	// 清空原有空闲链表，新建末尾唯一空闲块
+	FreeBlock *fp = free_head;
+	while (fp != NULL) {
+		FreeBlock *tmp = fp;
+		fp = fp->next;
+		free(tmp);
+	}
+	free_head = NULL;
+	if (cur_addr < total_mem) {
+		free_head = (FreeBlock*)malloc(sizeof(FreeBlock));
+		free_head->start = cur_addr;
+		free_head->size = total_mem - cur_addr;
+		free_head->next = NULL;
+	}
+	
+	// 输出结果
+	printf("COMPACTED %d\n", move_cnt);
+	MoveLog *log_p = log_head.next;
+	while (log_p != NULL) {
+		printf("%s %lld %lld\n", log_p->id, log_p->old_s, log_p->new_s);
+		MoveLog *tmp = log_p;
+		log_p = log_p->next;
+		free(tmp);
+	}
+}
