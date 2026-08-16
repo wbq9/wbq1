@@ -289,7 +289,6 @@ void compact_memory() {
 		free(tmp);
 	}
 }
-
 void dump_memory() {
 	// 拷贝并排序分配块
 	AllocBlock tmp_head = {"",0,0,NULL};
