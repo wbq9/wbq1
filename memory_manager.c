@@ -336,3 +336,22 @@ void dump_memory() {
 		fp = fp->next;
 	}
 }
+
+void free_all_list() {
+	// 释放分配链表
+	AllocBlock *ap = alloc_head;
+	while (ap != NULL) {
+		AllocBlock *tmp = ap;
+		ap = ap->next;
+		free(tmp);
+	}
+	// 释放空闲链表
+	FreeBlock *fp = free_head;
+	while (fp != NULL) {
+		FreeBlock *tmp = fp;
+		fp = fp->next;
+		free(tmp);
+	}
+	alloc_head = NULL;
+	free_head = NULL;
+}
