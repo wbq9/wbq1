@@ -354,3 +354,33 @@ void free_all_list() {
 	alloc_head = NULL;
 	free_head = NULL;
 }
+
+int main() {
+	long long M;
+	int Q;
+	scanf("%lld %d", &M, &Q);
+	init_memory(M);
+	
+	char cmd[20], id[MAX_ID_LEN];
+	long long size;
+	for (int i = 0; i < Q; i++) {
+		scanf("%s", cmd);
+		if (strcmp(cmd, "ALLOC") == 0) {
+			scanf("%s %lld", id, &size);
+			alloc_memory(id, size);
+		} else if (strcmp(cmd, "FREE") == 0) {
+			scanf("%s", id);
+			free_memory(id);
+		} else if (strcmp(cmd, "QUERY") == 0) {
+			scanf("%s", id);
+			query_block(id);
+		} else if (strcmp(cmd, "COMPACT") == 0) {
+			compact_memory();
+		} else if (strcmp(cmd, "DUMP") == 0) {
+			dump_memory();
+		}
+	}
+	
+	free_all_list();
+	return 0;
+}
